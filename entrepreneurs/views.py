@@ -30,6 +30,11 @@ class EntrepreneurViewSet(viewsets.ModelViewSet):
 
         self.save_work_images(entrepreneur)
 
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["request"] = self.request
+        return context
     # =====================================================
     # UPDATE ENTREPRENEUR
     # =====================================================
