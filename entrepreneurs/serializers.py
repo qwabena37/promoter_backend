@@ -22,20 +22,28 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Entrepreneur
+class Meta:
+    model = Entrepreneur
 
-        fields = [
-            "id",
-            "name",
-            "title",
-            "location",
-            "description",
-            "profile_image",
-            "video",
-            "gallery",
-            "socials",
-            "featured",
-            "created_at",
-        ]
+    fields = [
+        "id",
+        "name",
+        "title",
+        "location",
+        "description",
+        "profile_image",
+        "video",
+        "gallery",
+        "socials",
+        "featured",
+        "created_at",
+    ]
+
+    read_only_fields = [
+        "gallery",
+        "socials",
+        "created_at",
+    ]
 
     def get_gallery(self, obj):
 
@@ -50,7 +58,10 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
             if not image.image:
                 continue
 
-            url = image.image.url
+            try:
+                url = image.image.url
+            except Exception:
+                continue
 
             if request:
                 url = request.build_absolute_uri(url)
@@ -78,7 +89,10 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
 
         if instance.profile_image:
 
-            url = instance.profile_image.url
+            try:
+                 url = instance.profile_image.url
+            except Exception:
+                url = None
 
             if request:
                 url = request.build_absolute_uri(url)

@@ -7,7 +7,12 @@ from .serializers import EntrepreneurSerializer
 
 class EntrepreneurViewSet(viewsets.ModelViewSet):
 
-    queryset = Entrepreneur.objects.all().order_by("-created_at")
+    queryset = (
+        Entrepreneur.objects
+        .prefetch_related("works")
+        .all()
+        .order_by("-created_at")
+    )
 
     serializer_class = EntrepreneurSerializer
 
@@ -21,32 +26,9 @@ class EntrepreneurViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
 
-        # ---------------------------------------------
-        # Save entrepreneur first
-        # ---------------------------------------------
-
         entrepreneur = serializer.save()
 
-        # ---------------------------------------------
-        # Save work images
-        # ---------------------------------------------
-
-        work_image_fields = [
-            "work_image_1",
-            "work_image_2",
-            "work_image_3",
-        ]
-
-        for field in work_image_fields:
-
-            image = self.request.FILES.get(field)
-
-            if image:
-
-                WorkImage.objects.create(
-                    entrepreneur=entrepreneur,
-                    image=image
-                )
+        self.save_work_images(entrepreneur)
 
     # =====================================================
     # UPDATE ENTREPRENEUR
@@ -54,17 +36,15 @@ class EntrepreneurViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
 
-        # ---------------------------------------------
-        # Update entrepreneur
-        # ---------------------------------------------
-
         entrepreneur = serializer.save()
 
-        # ---------------------------------------------
-        # Save newly uploaded work images
-        #
-        # Existing images are NOT deleted.
-        # ---------------------------------------------
+        self.save_work_images(entrepreneur)
+
+    # =====================================================
+    # SAVE WORK IMAGES
+    # =====================================================
+
+    def save_work_images(self, entrepreneur):
 
         work_image_fields = [
             "work_image_1",
