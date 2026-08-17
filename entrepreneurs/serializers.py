@@ -14,6 +14,12 @@ class WorkImageSerializer(serializers.ModelSerializer):
 
 class EntrepreneurSerializer(serializers.ModelSerializer):
 
+    image = serializers.ImageField(
+        source="profile_image",
+        required=False,
+        allow_null=True
+    )
+
     gallery = serializers.SerializerMethodField()
     socials = serializers.SerializerMethodField()
 
@@ -27,6 +33,7 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
             "location",
             "description",
             "profile_image",
+            "image",
             "video",
             "gallery",
             "socials",
