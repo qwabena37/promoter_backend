@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
 
+    # Cloudinary
     "cloudinary",
     "cloudinary_storage",
 
@@ -115,6 +116,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
 
                 "django.contrib.messages.context_processors.messages",
+
             ],
         },
     },
@@ -134,7 +136,6 @@ WSGI_APPLICATION = "promoter.wsgi.application"
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-
 if DATABASE_URL:
 
     DATABASES = {
@@ -147,7 +148,6 @@ if DATABASE_URL:
 
 else:
 
-    # Local development fallback
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -157,7 +157,7 @@ else:
 
 
 # ---------------------------------------------------------
-# DJANGO REST FRAMEWORK
+# REST FRAMEWORK
 # ---------------------------------------------------------
 
 REST_FRAMEWORK = {
@@ -177,29 +177,28 @@ REST_FRAMEWORK = {
 
 
 # ---------------------------------------------------------
-# CLOUDINARY
+# CLOUDINARY CONFIGURATION
 # ---------------------------------------------------------
 
 cloudinary.config(
-
-    cloud_name=os.getenv(
-        "CLOUDINARY_CLOUD_NAME"
-    ),
-
-    api_key=os.getenv(
-        "CLOUDINARY_API_KEY"
-    ),
-
-    api_secret=os.getenv(
-        "CLOUDINARY_API_SECRET"
-    ),
-
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True,
 )
 
+# Django 5+ / Django 6 storage configuration
 
-DEFAULT_FILE_STORAGE = (
-    "cloudinary_storage.storage.MediaCloudinaryStorage"
-)
+STORAGES = {
+
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 
 # ---------------------------------------------------------
@@ -211,6 +210,8 @@ CORS_ALLOWED_ORIGINS = [
     "https://promoter-pi.vercel.app",
 
 ]
+
+CORS_ALLOW_CREDENTIALS = True
 
 
 # ---------------------------------------------------------
@@ -262,6 +263,13 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+
+# ---------------------------------------------------------
+# MEDIA (Cloudinary handles uploaded media)
+# ---------------------------------------------------------
+
+MEDIA_URL = "/media/"
 
 
 # ---------------------------------------------------------

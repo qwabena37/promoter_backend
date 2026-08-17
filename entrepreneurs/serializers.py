@@ -4,8 +4,10 @@ from .models import Entrepreneur, WorkImage
 
 
 class WorkImageSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = WorkImage
+
         fields = [
             "id",
             "image",
@@ -14,13 +16,8 @@ class WorkImageSerializer(serializers.ModelSerializer):
 
 class EntrepreneurSerializer(serializers.ModelSerializer):
 
-    image = serializers.ImageField(
-        source="profile_image",
-        required=False,
-        allow_null=True
-    )
-
     gallery = serializers.SerializerMethodField()
+
     socials = serializers.SerializerMethodField()
 
     class Meta:
@@ -33,7 +30,6 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
             "location",
             "description",
             "profile_image",
-            "image",
             "video",
             "gallery",
             "socials",
@@ -42,18 +38,29 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
         ]
 
     def get_gallery(self, obj):
+
         request = self.context.get("request")
 
         images = obj.works.all()
 
-        return [
-            request.build_absolute_uri(image.image.url)
-            if request
-            else image.image.url
-            for image in images
-        ]
+        gallery = []
+
+        for image in images:
+
+            if not image.image:
+                continue
+
+            url = image.image.url
+
+            if request:
+                url = request.build_absolute_uri(url)
+
+            gallery.append(url)
+
+        return gallery
 
     def get_socials(self, obj):
+
         return {
             "whatsapp": obj.whatsapp,
             "instagram": obj.instagram,
@@ -64,19 +71,22 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
         }
 
     def to_representation(self, instance):
+
         data = super().to_representation(instance)
 
         request = self.context.get("request")
 
         if instance.profile_image:
-            data["image"] = (
-                request.build_absolute_uri(
-                    instance.profile_image.url
-                )
-                if request
-                else instance.profile_image.url
-            )
 
-        data["description"] = instance.description
+            url = instance.profile_image.url
+
+            if request:
+                url = request.build_absolute_uri(url)
+
+            data["image"] = url
+
+        else:
+
+            data["image"] = None
 
         return data
