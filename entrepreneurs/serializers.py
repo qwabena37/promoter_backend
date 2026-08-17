@@ -29,15 +29,6 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
             "description",
             "profile_image",
             "video",
-
-            # Social fields (must be included to save them)
-            "whatsapp",
-            "instagram",
-            "facebook",
-            "tiktok",
-            "youtube",
-            "website",
-
             "gallery",
             "socials",
             "featured",
@@ -50,42 +41,71 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
             "created_at",
         ]
 
+    # =====================================================
+    # GALLERY
+    # =====================================================
+
     def get_gallery(self, obj):
+
         gallery = []
 
-        for image in obj.works.all():
+        for work in obj.works.all():
 
-            if not image.image:
+            if not work.image:
                 continue
 
             try:
-                gallery.append(image.image.url)
-            except Exception:
-                continue
+                # Cloudinary already returns an absolute URL
+                url = work.image.url
+
+                if url:
+                    gallery.append(url)
+
+            except Exception as error:
+                print(
+                    f"Error loading work image {work.id}: {error}"
+                )
 
         return gallery
 
+    # =====================================================
+    # SOCIALS
+    # =====================================================
+
     def get_socials(self, obj):
+
         return {
-            "whatsapp": obj.whatsapp,
-            "instagram": obj.instagram,
-            "facebook": obj.facebook,
-            "tiktok": obj.tiktok,
-            "youtube": obj.youtube,
-            "website": obj.website,
+            "whatsapp": obj.whatsapp or "",
+            "instagram": obj.instagram or "",
+            "facebook": obj.facebook or "",
+            "tiktok": obj.tiktok or "",
+            "youtube": obj.youtube or "",
+            "website": obj.website or "",
         }
+
+    # =====================================================
+    # REPRESENTATION
+    # =====================================================
 
     def to_representation(self, instance):
 
         data = super().to_representation(instance)
 
-        try:
-            data["image"] = (
-                instance.profile_image.url
-                if instance.profile_image
-                else None
-            )
-        except Exception:
+        # Cloudinary profile image
+        if instance.profile_image:
+
+            try:
+                data["image"] = instance.profile_image.url
+
+            except Exception as error:
+                print(
+                    f"Error loading profile image "
+                    f"for entrepreneur {instance.id}: {error}"
+                )
+
+                data["image"] = None
+
+        else:
             data["image"] = None
 
         return data
