@@ -1,12 +1,21 @@
-from rest_framework import request, viewsets
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+
 import uuid
-from rest_framework.response import Response
+
 from django.shortcuts import get_object_or_404
 
-from rest_framework import status
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from .models import Entrepreneur, WorkImage, EntrepreneurLike
+from rest_framework.permissions import (
+    IsAuthenticatedOrReadOnly,
+    AllowAny,
+)
+from rest_framework.response import Response
+
+from .models import (
+    Entrepreneur,
+    WorkImage,
+    EntrepreneurLike,
+)
 from .serializers import EntrepreneurSerializer
 
 
@@ -21,9 +30,35 @@ class EntrepreneurViewSet(viewsets.ModelViewSet):
 
     serializer_class = EntrepreneurSerializer
 
+    # =====================================================
+    # PERMISSIONS
+    # =====================================================
+
     permission_classes = [
         IsAuthenticatedOrReadOnly
     ]
+
+    def get_permissions(self):
+        """
+        Allow anyone to view, like and unlike entrepreneurs.
+
+        Creating, updating and deleting entrepreneurs still
+        requires authentication.
+        """
+
+        if self.action in ["like", "unlike"]:
+            return [AllowAny()]
+
+        return [permission() for permission in self.permission_classes]
+
+    # =====================================================
+    # SERIALIZER CONTEXT
+    # =====================================================
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["request"] = self.request
+        return context
 
     # =====================================================
     # CREATE ENTREPRENEUR
@@ -35,11 +70,6 @@ class EntrepreneurViewSet(viewsets.ModelViewSet):
 
         self.save_work_images(entrepreneur)
 
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context["request"] = self.request
-        return context
     # =====================================================
     # UPDATE ENTREPRENEUR
     # =====================================================
@@ -73,6 +103,10 @@ class EntrepreneurViewSet(viewsets.ModelViewSet):
                     image=image
                 )
 
+    # =====================================================
+    # LIKE ENTREPRENEUR
+    # =====================================================
+
     @action(
         detail=True,
         methods=["post"],
@@ -81,89 +115,136 @@ class EntrepreneurViewSet(viewsets.ModelViewSet):
     def like(self, request, pk=None):
 
         entrepreneur = get_object_or_404(
-        Entrepreneur,
-        pk=pk
+            Entrepreneur,
+            pk=pk
         )
+
+        # -------------------------------------------------
+        # Get visitor ID
+        # -------------------------------------------------
 
         visitor_id = request.data.get("visitor_id")
 
         if not visitor_id:
+
             return Response(
-            {
-                "detail": "visitor_id is required."
-            },
-            status=status.HTTP_400_BAD_REQUEST
-        )
+                {
+                    "detail": "visitor_id is required."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # -------------------------------------------------
+        # Validate UUID
+        # -------------------------------------------------
 
         try:
+
             visitor_id = uuid.UUID(
-            str(visitor_id)
+                str(visitor_id)
             )
-        except ValueError:
+
+        except (ValueError, TypeError):
+
             return Response(
-            {
-                "detail": "Invalid visitor_id."
-            },
-            status=status.HTTP_400_BAD_REQUEST
-        )
+                {
+                    "detail": "Invalid visitor_id."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # -------------------------------------------------
+        # Create unique like
+        # -------------------------------------------------
 
         like, created = EntrepreneurLike.objects.get_or_create(
             entrepreneur=entrepreneur,
             visitor_id=visitor_id,
         )
 
-        return Response(
-        {
-            "liked": True,
-            "likes_count": entrepreneur.likes.count(),
-        }
-    )
+        # -------------------------------------------------
+        # Return current state
+        # -------------------------------------------------
 
-
-@action(
-    detail=True,
-    methods=["delete"],
-    url_path="like"
-)
-def unlike(self, request, pk=None):
-
-    entrepreneur = get_object_or_404(
-        Entrepreneur,
-        pk=pk
-    )
-
-    visitor_id = request.query_params.get(
-        "visitor_id"
-    )
-
-    if not visitor_id:
         return Response(
             {
-                "detail": "visitor_id is required."
+                "liked": True,
+                "created": created,
+                "likes_count": entrepreneur.likes.count(),
             },
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_200_OK
         )
 
-    try:
-        visitor_id = uuid.UUID(
-            str(visitor_id)
+    # =====================================================
+    # UNLIKE ENTREPRENEUR
+    # =====================================================
+
+    @action(
+        detail=True,
+        methods=["delete"],
+        url_path="like"
+    )
+    def unlike(self, request, pk=None):
+
+        entrepreneur = get_object_or_404(
+            Entrepreneur,
+            pk=pk
         )
-    except ValueError:
+
+        # -------------------------------------------------
+        # Get visitor ID
+        # -------------------------------------------------
+
+        visitor_id = request.query_params.get(
+            "visitor_id"
+        )
+
+        if not visitor_id:
+
+            return Response(
+                {
+                    "detail": "visitor_id is required."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # -------------------------------------------------
+        # Validate UUID
+        # -------------------------------------------------
+
+        try:
+
+            visitor_id = uuid.UUID(
+                str(visitor_id)
+            )
+
+        except (ValueError, TypeError):
+
+            return Response(
+                {
+                    "detail": "Invalid visitor_id."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # -------------------------------------------------
+        # Remove like
+        # -------------------------------------------------
+
+        EntrepreneurLike.objects.filter(
+            entrepreneur=entrepreneur,
+            visitor_id=visitor_id,
+        ).delete()
+
+        # -------------------------------------------------
+        # Return updated count
+        # -------------------------------------------------
+
         return Response(
             {
-                "detail": "Invalid visitor_id."
+                "liked": False,
+                "likes_count": entrepreneur.likes.count(),
             },
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_200_OK
         )
 
-    EntrepreneurLike.objects.filter(
-        entrepreneur=entrepreneur,
-        visitor_id=visitor_id,
-    ).delete()
-
-    return Response(
-        {
-            "liked": False,
-            "likes_count": entrepreneur.likes.count(),
-        }
-    )

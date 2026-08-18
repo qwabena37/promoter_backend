@@ -1,4 +1,6 @@
+
 import uuid
+
 from django.db import models
 
 
@@ -7,57 +9,68 @@ class Entrepreneur(models.Model):
 
     title = models.CharField(
         max_length=255,
-        blank=True
+        blank=True,
     )
 
     location = models.CharField(
         max_length=255,
-        blank=True
+        blank=True,
     )
 
     description = models.TextField()
 
     profile_image = models.ImageField(
-        upload_to="entrepreneurs/profile/"
+        upload_to="entrepreneurs/profile/",
     )
 
     video = models.URLField(
         blank=True,
-        null=True
+        null=True,
     )
 
-    # Social media
+    # =========================================================
+    # SOCIAL MEDIA
+    # =========================================================
+
     whatsapp = models.CharField(
         max_length=30,
-        blank=True
+        blank=True,
     )
 
     instagram = models.URLField(
-        blank=True
+        blank=True,
     )
 
     facebook = models.URLField(
-        blank=True
+        blank=True,
     )
 
     tiktok = models.URLField(
-        blank=True
+        blank=True,
     )
 
     youtube = models.URLField(
-        blank=True
+        blank=True,
     )
 
     website = models.URLField(
-        blank=True
+        blank=True,
     )
+
+    # =========================================================
+    # FEATURED
+    # =========================================================
 
     featured = models.BooleanField(
-        default=False
+        default=False,
     )
 
+    # =========================================================
+    # CREATED DATE
+    # =========================================================
+
     created_at = models.DateTimeField(
-        auto_now_add=True
+        auto_now_add=True,
     )
 
     def __str__(self):
@@ -68,15 +81,15 @@ class WorkImage(models.Model):
     entrepreneur = models.ForeignKey(
         Entrepreneur,
         related_name="works",
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
     )
 
     image = models.ImageField(
-        upload_to="entrepreneurs/works/"
+        upload_to="entrepreneurs/works/",
     )
 
     created_at = models.DateTimeField(
-        auto_now_add=True
+        auto_now_add=True,
     )
 
     def __str__(self):
@@ -84,27 +97,48 @@ class WorkImage(models.Model):
 
 
 class EntrepreneurLike(models.Model):
+    """
+    Stores one unique like from a visitor for an entrepreneur.
+
+    A visitor is identified using a UUID stored by the frontend.
+    This allows visitors to like profiles without creating an account.
+    """
+
     entrepreneur = models.ForeignKey(
-        "Entrepreneur",
-        on_delete=models.CASCADE,
+        Entrepreneur,
         related_name="likes",
+        on_delete=models.CASCADE,
     )
 
     visitor_id = models.UUIDField(
-        default=uuid.uuid4
+        default=uuid.uuid4,
     )
 
     created_at = models.DateTimeField(
-        auto_now_add=True
+        auto_now_add=True,
     )
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["entrepreneur", "visitor_id"],
+                fields=[
+                    "entrepreneur",
+                    "visitor_id",
+                ],
                 name="unique_entrepreneur_visitor_like",
-            )
+            ),
         ]
+
+        indexes = [
+            models.Index(
+                fields=[
+                    "entrepreneur",
+                    "visitor_id",
+                ],
+                name="entrepreneur_visitor_idx",
+            ),
+        ]
+
         ordering = ["-created_at"]
 
     def __str__(self):
