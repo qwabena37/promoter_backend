@@ -1,7 +1,12 @@
+
 from rest_framework import serializers
 
 from .models import Entrepreneur, WorkImage
 
+
+# =========================================================
+# WORK IMAGE SERIALIZER
+# =========================================================
 
 class WorkImageSerializer(serializers.ModelSerializer):
 
@@ -13,10 +18,19 @@ class WorkImageSerializer(serializers.ModelSerializer):
         ]
 
 
+# =========================================================
+# ENTREPRENEUR SERIALIZER
+# =========================================================
+
 class EntrepreneurSerializer(serializers.ModelSerializer):
 
     gallery = serializers.SerializerMethodField()
     socials = serializers.SerializerMethodField()
+
+    likes_count = serializers.IntegerField(
+        source="likes.count",
+        read_only=True
+    )
 
     class Meta:
         model = Entrepreneur
@@ -28,18 +42,42 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
             "location",
             "description",
             "profile_image",
+            "image",
             "video",
             "gallery",
             "socials",
             "featured",
+            "likes_count",
             "created_at",
         ]
 
         read_only_fields = [
+            "image",
             "gallery",
             "socials",
+            "likes_count",
             "created_at",
         ]
+
+    # =====================================================
+    # PROFILE IMAGE
+    # =====================================================
+
+    def get_image(self, obj):
+
+        if not obj.profile_image:
+            return None
+
+        try:
+            return obj.profile_image.url
+
+        except Exception as error:
+            print(
+                f"Error loading profile image "
+                f"for entrepreneur {obj.id}: {error}"
+            )
+
+            return None
 
     # =====================================================
     # GALLERY
@@ -55,7 +93,6 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
                 continue
 
             try:
-                # Cloudinary already returns an absolute URL
                 url = work.image.url
 
                 if url:
@@ -63,7 +100,8 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
 
             except Exception as error:
                 print(
-                    f"Error loading work image {work.id}: {error}"
+                    f"Error loading work image "
+                    f"{work.id}: {error}"
                 )
 
         return gallery
@@ -83,40 +121,3 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
             "website": obj.website or "",
         }
 
-    # =====================================================
-    # REPRESENTATION
-    # =====================================================
-
-    def to_representation(self, instance):
-
-        data = super().to_representation(instance)
-
-        # Cloudinary profile image
-        if instance.profile_image:
-
-            try:
-                data["image"] = instance.profile_image.url
-
-            except Exception as error:
-                print(
-                    f"Error loading profile image "
-                    f"for entrepreneur {instance.id}: {error}"
-                )
-
-                data["image"] = None
-
-        else:
-            data["image"] = None
-
-        return data
-
-class EntrepreneurSerializer(serializers.ModelSerializer):
-
-    likes_count = serializers.IntegerField(
-        source="likes.count",
-        read_only=True
-    )
-
-    class Meta:
-        model = Entrepreneur
-        fields = "__all__"
