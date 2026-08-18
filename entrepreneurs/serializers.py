@@ -12,6 +12,7 @@ class WorkImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = WorkImage
+
         fields = [
             "id",
             "image",
@@ -24,7 +25,14 @@ class WorkImageSerializer(serializers.ModelSerializer):
 
 class EntrepreneurSerializer(serializers.ModelSerializer):
 
+    # =====================================================
+    # CUSTOM FIELDS
+    # =====================================================
+
+    image = serializers.SerializerMethodField()
+
     gallery = serializers.SerializerMethodField()
+
     socials = serializers.SerializerMethodField()
 
     likes_count = serializers.IntegerField(
@@ -32,7 +40,12 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
+    # =====================================================
+    # META
+    # =====================================================
+
     class Meta:
+
         model = Entrepreneur
 
         fields = [
@@ -69,9 +82,11 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
             return None
 
         try:
+
             return obj.profile_image.url
 
         except Exception as error:
+
             print(
                 f"Error loading profile image "
                 f"for entrepreneur {obj.id}: {error}"
@@ -87,22 +102,33 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
 
         gallery = []
 
-        for work in obj.works.all():
+        try:
 
-            if not work.image:
-                continue
+            for work in obj.works.all():
 
-            try:
-                url = work.image.url
+                if not work.image:
+                    continue
 
-                if url:
-                    gallery.append(url)
+                try:
 
-            except Exception as error:
-                print(
-                    f"Error loading work image "
-                    f"{work.id}: {error}"
-                )
+                    url = work.image.url
+
+                    if url:
+                        gallery.append(url)
+
+                except Exception as error:
+
+                    print(
+                        f"Error loading work image "
+                        f"{work.id}: {error}"
+                    )
+
+        except Exception as error:
+
+            print(
+                f"Error loading gallery for "
+                f"entrepreneur {obj.id}: {error}"
+            )
 
         return gallery
 
@@ -120,4 +146,3 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
             "youtube": obj.youtube or "",
             "website": obj.website or "",
         }
-
