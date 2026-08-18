@@ -1,7 +1,12 @@
-from rest_framework import viewsets
+from rest_framework import request, viewsets
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+import uuid
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
 
-from .models import Entrepreneur, WorkImage
+from rest_framework import status
+from rest_framework.decorators import action
+from .models import Entrepreneur, WorkImage, EntrepreneurLike
 from .serializers import EntrepreneurSerializer
 
 
@@ -67,3 +72,98 @@ class EntrepreneurViewSet(viewsets.ModelViewSet):
                     entrepreneur=entrepreneur,
                     image=image
                 )
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="like"
+    )
+    def like(self, request, pk=None):
+
+        entrepreneur = get_object_or_404(
+        Entrepreneur,
+        pk=pk
+        )
+
+        visitor_id = request.data.get("visitor_id")
+
+        if not visitor_id:
+            return Response(
+            {
+                "detail": "visitor_id is required."
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+        try:
+            visitor_id = uuid.UUID(
+            str(visitor_id)
+            )
+        except ValueError:
+            return Response(
+            {
+                "detail": "Invalid visitor_id."
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+        like, created = EntrepreneurLike.objects.get_or_create(
+            entrepreneur=entrepreneur,
+            visitor_id=visitor_id,
+        )
+
+        return Response(
+        {
+            "liked": True,
+            "likes_count": entrepreneur.likes.count(),
+        }
+    )
+
+
+@action(
+    detail=True,
+    methods=["delete"],
+    url_path="like"
+)
+def unlike(self, request, pk=None):
+
+    entrepreneur = get_object_or_404(
+        Entrepreneur,
+        pk=pk
+    )
+
+    visitor_id = request.query_params.get(
+        "visitor_id"
+    )
+
+    if not visitor_id:
+        return Response(
+            {
+                "detail": "visitor_id is required."
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        visitor_id = uuid.UUID(
+            str(visitor_id)
+        )
+    except ValueError:
+        return Response(
+            {
+                "detail": "Invalid visitor_id."
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    EntrepreneurLike.objects.filter(
+        entrepreneur=entrepreneur,
+        visitor_id=visitor_id,
+    ).delete()
+
+    return Response(
+        {
+            "liked": False,
+            "likes_count": entrepreneur.likes.count(),
+        }
+    )

@@ -109,3 +109,14 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
             data["image"] = None
 
         return data
+
+class EntrepreneurSerializer(serializers.ModelSerializer):
+
+    likes_count = serializers.IntegerField(
+        source="likes.count",
+        read_only=True
+    )
+
+    class Meta:
+        model = Entrepreneur
+        fields = "__all__"
