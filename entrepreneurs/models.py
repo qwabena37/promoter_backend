@@ -92,16 +92,67 @@ class WorkImage(models.Model):
         auto_now_add=True,
     )
 
+    def save(self, *args, **kwargs):
+
+        # =====================================================
+        # ONLY APPLY LIMIT WHEN CREATING A NEW IMAGE
+        # =====================================================
+
+        if not self.pk:
+
+            existing_images = (
+                WorkImage.objects
+                .filter(
+                    entrepreneur=self.entrepreneur
+                )
+                .order_by("created_at", "id")
+            )
+
+            # =================================================
+            # KEEP MAXIMUM OF 3 IMAGES
+            #
+            # If there are already 3 images,
+            # delete the oldest one before saving
+            # the new image.
+            # =================================================
+
+            if existing_images.count() >= 3:
+
+                oldest_image = (
+                    existing_images.first()
+                )
+
+                if oldest_image:
+
+                    # Delete the actual image file
+                    if oldest_image.image:
+
+                        oldest_image.image.delete(
+                            save=False
+                        )
+
+                    # Delete database record
+                    oldest_image.delete()
+
+        # =====================================================
+        # SAVE NEW IMAGE
+        # =====================================================
+
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"{self.entrepreneur.name} - Work"
+        return (
+            f"{self.entrepreneur.name} - Work"
+        )
 
 
 class EntrepreneurLike(models.Model):
     """
-    Stores one unique like from a visitor for an entrepreneur.
+    Stores one unique like from a visitor
+    for an entrepreneur.
 
-    A visitor is identified using a UUID stored by the frontend.
-    This allows visitors to like profiles without creating an account.
+    A visitor is identified using a UUID
+    stored by the frontend.
     """
 
     entrepreneur = models.ForeignKey(
@@ -119,13 +170,16 @@ class EntrepreneurLike(models.Model):
     )
 
     class Meta:
+
         constraints = [
             models.UniqueConstraint(
                 fields=[
                     "entrepreneur",
                     "visitor_id",
                 ],
-                name="unique_entrepreneur_visitor_like",
+                name=(
+                    "unique_entrepreneur_visitor_like"
+                ),
             ),
         ]
 
@@ -139,7 +193,9 @@ class EntrepreneurLike(models.Model):
             ),
         ]
 
-        ordering = ["-created_at"]
+        ordering = [
+            "-created_at"
+        ]
 
     def __str__(self):
         return (

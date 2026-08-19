@@ -26,18 +26,33 @@ class WorkImageSerializer(serializers.ModelSerializer):
 class EntrepreneurSerializer(serializers.ModelSerializer):
 
     # =====================================================
-    # CUSTOM FIELDS
+    # PROFILE IMAGE
     # =====================================================
 
     image = serializers.SerializerMethodField()
 
-    gallery = serializers.SerializerMethodField()
+    # =====================================================
+    # WORK IMAGES
+    # =====================================================
+
+    works = WorkImageSerializer(
+        many=True,
+        read_only=True,
+    )
+
+    # =====================================================
+    # SOCIAL MEDIA
+    # =====================================================
 
     socials = serializers.SerializerMethodField()
 
+    # =====================================================
+    # LIKES
+    # =====================================================
+
     likes_count = serializers.IntegerField(
         source="likes.count",
-        read_only=True
+        read_only=True,
     )
 
     # =====================================================
@@ -57,7 +72,7 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
             "profile_image",
             "image",
             "video",
-            "gallery",
+            "works",
             "socials",
             "featured",
             "likes_count",
@@ -66,7 +81,7 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
 
         read_only_fields = [
             "image",
-            "gallery",
+            "works",
             "socials",
             "likes_count",
             "created_at",
@@ -93,44 +108,6 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
             )
 
             return None
-
-    # =====================================================
-    # GALLERY
-    # =====================================================
-
-    def get_gallery(self, obj):
-
-        gallery = []
-
-        try:
-
-            for work in obj.works.all():
-
-                if not work.image:
-                    continue
-
-                try:
-
-                    url = work.image.url
-
-                    if url:
-                        gallery.append(url)
-
-                except Exception as error:
-
-                    print(
-                        f"Error loading work image "
-                        f"{work.id}: {error}"
-                    )
-
-        except Exception as error:
-
-            print(
-                f"Error loading gallery for "
-                f"entrepreneur {obj.id}: {error}"
-            )
-
-        return gallery
 
     # =====================================================
     # SOCIALS
