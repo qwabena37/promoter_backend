@@ -3,11 +3,15 @@ import uuid
 from django.db import models
 
 
+# =========================================================
+# ENTREPRENEUR
+# =========================================================
+
 class Entrepreneur(models.Model):
 
-    # =========================================================
+    # =====================================================
     # BASIC INFORMATION
-    # =========================================================
+    # =====================================================
 
     name = models.CharField(
         max_length=255,
@@ -25,37 +29,26 @@ class Entrepreneur(models.Model):
 
     description = models.TextField()
 
-
-    # =========================================================
+    # =====================================================
     # PROFILE IMAGE
-    # =========================================================
+    # =====================================================
 
     profile_image = models.ImageField(
         upload_to="entrepreneurs/profile/",
     )
 
-
-    # =========================================================
+    # =====================================================
     # FEATURED VIDEO
-    #
-    # Can store:
-    # - YouTube URL
-    # - TikTok URL
-    # - Direct video URL
-    # - Cloudinary video URL
-    #
-    # The frontend decides how to display/play it.
-    # =========================================================
+    # =====================================================
 
     video = models.URLField(
         blank=True,
         null=True,
     )
 
-
-    # =========================================================
+    # =====================================================
     # SOCIAL MEDIA / CONTACT
-    # =========================================================
+    # =====================================================
 
     whatsapp = models.CharField(
         max_length=30,
@@ -86,36 +79,33 @@ class Entrepreneur(models.Model):
         blank=True,
     )
 
-
-    # =========================================================
+    # =====================================================
     # FEATURED
-    # =========================================================
+    # =====================================================
 
     featured = models.BooleanField(
         default=False,
     )
 
-
-    # =========================================================
+    # =====================================================
     # CREATED DATE
-    # =========================================================
+    # =====================================================
 
     created_at = models.DateTimeField(
         auto_now_add=True,
     )
 
-
-    # =========================================================
-    # STRING REPRESENTATION
-    # =========================================================
+    # =====================================================
+    # STRING
+    # =====================================================
 
     def __str__(self):
         return self.name
 
 
-# =============================================================
+# =========================================================
 # WORK IMAGE
-# =============================================================
+# =========================================================
 
 class WorkImage(models.Model):
 
@@ -133,24 +123,14 @@ class WorkImage(models.Model):
         auto_now_add=True,
     )
 
-
-    # =========================================================
+    # =====================================================
     # MAXIMUM 3 WORK IMAGES
-    #
-    # When a 4th image is uploaded:
-    #
-    # 1. Find the oldest image
-    # 2. Delete its physical file
-    # 3. Delete its database record
-    # 4. Save the new image
-    #
-    # Therefore Cloudinary/storage will not retain
-    # the replaced image.
-    # =========================================================
+    # =====================================================
 
     def save(self, *args, **kwargs):
 
-        # Only run this when creating a NEW image
+        # Only enforce the limit when creating
+        # a completely new image.
         if not self.pk:
 
             existing_images = (
@@ -164,10 +144,6 @@ class WorkImage(models.Model):
                 )
             )
 
-            # -------------------------------------------------
-            # Maximum of 3 images
-            # -------------------------------------------------
-
             if existing_images.count() >= 3:
 
                 oldest_image = (
@@ -176,34 +152,24 @@ class WorkImage(models.Model):
 
                 if oldest_image:
 
-                    # -------------------------------------------------
-                    # Delete the actual stored image
-                    #
-                    # This is important for Cloudinary as well.
-                    # -------------------------------------------------
-
+                    # Delete physical file
                     if oldest_image.image:
 
                         oldest_image.image.delete(
                             save=False
                         )
 
-                    # -------------------------------------------------
                     # Delete database record
-                    # -------------------------------------------------
-
                     oldest_image.delete()
-
-
-        # -----------------------------------------------------
-        # Save the new image
-        # -----------------------------------------------------
 
         super().save(
             *args,
             **kwargs
         )
 
+    # =====================================================
+    # STRING
+    # =====================================================
 
     def __str__(self):
 
@@ -212,18 +178,20 @@ class WorkImage(models.Model):
         )
 
 
-# =============================================================
+# =========================================================
 # ENTREPRENEUR LIKE
-# =============================================================
+# =========================================================
 
 class EntrepreneurLike(models.Model):
 
     """
-    Stores one unique like from a visitor
-    for an entrepreneur.
+    Stores one unique like from a visitor.
 
-    A visitor is identified using a UUID
-    stored by the frontend.
+    Each visitor is identified by a UUID stored
+    in the frontend localStorage.
+
+    One visitor can only have one like per
+    entrepreneur.
     """
 
     entrepreneur = models.ForeignKey(
@@ -240,6 +208,10 @@ class EntrepreneurLike(models.Model):
         auto_now_add=True,
     )
 
+    # =====================================================
+    # DATABASE SETTINGS
+    # =====================================================
+
     class Meta:
 
         constraints = [
@@ -248,7 +220,9 @@ class EntrepreneurLike(models.Model):
                     "entrepreneur",
                     "visitor_id",
                 ],
-                name="unique_entrepreneur_visitor_like",
+                name=(
+                    "unique_entrepreneur_visitor_like"
+                ),
             ),
         ]
 
@@ -265,6 +239,10 @@ class EntrepreneurLike(models.Model):
         ordering = [
             "-created_at",
         ]
+
+    # =====================================================
+    # STRING
+    # =====================================================
 
     def __str__(self):
 

@@ -1,16 +1,21 @@
-
 from rest_framework import serializers
 
-from .models import Entrepreneur, WorkImage
+from .models import (
+    Entrepreneur,
+    WorkImage,
+)
 
 
 # =========================================================
 # WORK IMAGE SERIALIZER
 # =========================================================
 
-class WorkImageSerializer(serializers.ModelSerializer):
+class WorkImageSerializer(
+    serializers.ModelSerializer
+):
 
     class Meta:
+
         model = WorkImage
 
         fields = [
@@ -23,7 +28,9 @@ class WorkImageSerializer(serializers.ModelSerializer):
 # ENTREPRENEUR SERIALIZER
 # =========================================================
 
-class EntrepreneurSerializer(serializers.ModelSerializer):
+class EntrepreneurSerializer(
+    serializers.ModelSerializer
+):
 
     # =====================================================
     # PROFILE IMAGE
@@ -50,10 +57,7 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
     # LIKES
     # =====================================================
 
-    likes_count = serializers.IntegerField(
-        source="likes.count",
-        read_only=True,
-    )
+    likes_count = serializers.SerializerMethodField()
 
     # =====================================================
     # META
@@ -111,10 +115,19 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
 
             print(
                 f"Error loading profile image "
-                f"for entrepreneur {obj.id}: {error}"
+                f"for entrepreneur {obj.id}: "
+                f"{error}"
             )
 
             return None
+
+    # =====================================================
+    # LIKES COUNT
+    # =====================================================
+
+    def get_likes_count(self, obj):
+
+        return obj.likes.count()
 
     # =====================================================
     # SOCIALS
@@ -128,6 +141,10 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
             "facebook": obj.facebook or "",
             "tiktok": obj.tiktok or "",
             "youtube": obj.youtube or "",
+
+            # IMPORTANT:
+            # Model field is linkedIn
             "linkedin": obj.linkedIn or "",
+
             "website": obj.website or "",
         }
