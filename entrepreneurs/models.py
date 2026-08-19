@@ -252,34 +252,6 @@ class EntrepreneurLike(models.Model):
             ),
         ]
 
-        ordering = ["-created_at"]
-
-    def __str__(self):
-        return (
-            f"{self.visitor_id} liked "
-            f"{self.entrepreneur.name}"
-        )
-
-
-
-    # =========================================================
-    # DATABASE CONSTRAINTS
-    # =========================================================
-
-    class Meta:
-
-        constraints = [
-            models.UniqueConstraint(
-                fields=[
-                    "entrepreneur",
-                    "visitor_id",
-                ],
-                name=(
-                    "unique_entrepreneur_visitor_like"
-                ),
-            ),
-        ]
-
         indexes = [
             models.Index(
                 fields=[
@@ -293,7 +265,6 @@ class EntrepreneurLike(models.Model):
         ordering = [
             "-created_at",
         ]
-
 
     def __str__(self):
 
