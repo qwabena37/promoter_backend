@@ -79,7 +79,7 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
             "tiktok",
             "youtube",
             "website",
-            "linkedin",
+            "linkedIn",
             "socials",
             "featured",
             "likes_count",
@@ -128,6 +128,6 @@ class EntrepreneurSerializer(serializers.ModelSerializer):
             "facebook": obj.facebook or "",
             "tiktok": obj.tiktok or "",
             "youtube": obj.youtube or "",
-            "linkedin": obj.linkedin or "",
+            "linkedin": obj.linkedIn or "",
             "website": obj.website or "",
         }
