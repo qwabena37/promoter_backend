@@ -75,7 +75,7 @@ class Entrepreneur(models.Model):
         blank=True,
     )
 
-    linkedIn = models.URLField(
+    linkedin = models.URLField(
         blank=True,
     )
 

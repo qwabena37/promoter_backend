@@ -83,7 +83,7 @@ class EntrepreneurSerializer(
             "tiktok",
             "youtube",
             "website",
-            "linkedIn",
+            "linkedin",
             "socials",
             "featured",
             "likes_count",
@@ -144,7 +144,7 @@ class EntrepreneurSerializer(
 
             # IMPORTANT:
             # Model field is linkedIn
-            "linkedin": obj.linkedIn or "",
+            "linkedin": obj.linkedin or "",
 
             "website": obj.website or "",
         }
