@@ -89,9 +89,12 @@ MIDDLEWARE = [
 # =========================================================
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "https://promoter-pi.vercel.app",
+    origin.strip()
+    for origin in os.environ.get(
+        "CORS_ALLOWED_ORIGINS",
+        "http://localhost:5173,http://localhost:3000,https://promoter-pi.vercel.app",
+    ).split(",")
+    if origin.strip()
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -102,10 +105,12 @@ CORS_ALLOW_CREDENTIALS = True
 # =========================================================
 
 CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "https://promoter-pi.vercel.app",
-    "https://promoter-backend.vercel.app",
+    origin.strip()
+    for origin in os.environ.get(
+        "CSRF_TRUSTED_ORIGINS",
+        "http://localhost:5173,http://localhost:3000,https://promoter-pi.vercel.app,https://promoter-backend.vercel.app",
+    ).split(",")
+    if origin.strip()
 ]
 
 
