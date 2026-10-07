@@ -14,7 +14,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get(
     "DJANGO_SECRET_KEY",
-    "django-insecure-development-key",
+    os.environ.get(
+        "SECRET_KEY",
+        "django-insecure-development-key",
+    ),
 )
 
 DEBUG = os.environ.get(
@@ -27,7 +30,7 @@ ALLOWED_HOSTS = [
     host.strip()
     for host in os.environ.get(
         "ALLOWED_HOSTS",
-        "localhost,127.0.0.1",
+        "localhost,127.0.0.1,promoter-backend.vercel.app",
     ).split(",")
     if host.strip()
 ]
@@ -38,7 +41,6 @@ ALLOWED_HOSTS = [
 # =========================================================
 
 INSTALLED_APPS = [
-
     # Django
     "django.contrib.admin",
     "django.contrib.auth",
@@ -66,9 +68,9 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
 
-    "django.contrib.sessions.middleware.SessionMiddleware",
-
     "corsheaders.middleware.CorsMiddleware",
+
+    "django.contrib.sessions.middleware.SessionMiddleware",
 
     "django.middleware.common.CommonMiddleware",
 
@@ -92,6 +94,20 @@ CORS_ALLOWED_ORIGINS = [
     "https://promoter-pi.vercel.app",
 ]
 
+CORS_ALLOW_CREDENTIALS = True
+
+
+# =========================================================
+# CSRF
+# =========================================================
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://promoter-pi.vercel.app",
+    "https://promoter-backend.vercel.app",
+]
+
 
 # =========================================================
 # REST FRAMEWORK
@@ -100,6 +116,10 @@ CORS_ALLOWED_ORIGINS = [
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.AllowAny",
     ),
 }
 
@@ -168,12 +188,7 @@ TEMPLATES = [
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-
 if DATABASE_URL:
-
-    # Production
-    # PostgreSQL
-
     DATABASES = {
         "default": dj_database_url.parse(
             DATABASE_URL,
@@ -181,12 +196,7 @@ if DATABASE_URL:
             ssl_require=True,
         )
     }
-
 else:
-
-    # Development
-    # Existing SQLite database
-
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -202,22 +212,19 @@ else:
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME":
-        "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+            "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
-
     {
         "NAME":
-        "django.contrib.auth.password_validation.MinimumLengthValidator",
+            "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
-
     {
         "NAME":
-        "django.contrib.auth.password_validation.CommonPasswordValidator",
+            "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
-
     {
         "NAME":
-        "django.contrib.auth.password_validation.NumericPasswordValidator",
+            "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -248,12 +255,17 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # MEDIA / CLOUDINARY
 # =========================================================
 
-DEFAULT_FILE_STORAGE = (
-    "cloudinary_storage.storage.MediaCloudinaryStorage"
-)
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 
-# Cloudinary credentials are read from environment variables.
 CLOUDINARY_STORAGE = {
     "CLOUD_NAME": os.environ.get("CLOUDINARY_CLOUD_NAME"),
     "API_KEY": os.environ.get("CLOUDINARY_API_KEY"),
@@ -273,14 +285,20 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # =========================================================
 
 if not DEBUG:
-
     SECURE_PROXY_SSL_HEADER = (
         "HTTP_X_FORWARDED_PROTO",
         "https",
     )
 
-    SECURE_SSL_REDIRECT = True
-
     SESSION_COOKIE_SECURE = True
 
     CSRF_COOKIE_SECURE = True
+
+# =========================================================
+# DEVELOPMENT STATIC FILES
+# =========================================================
+
+if DEBUG:
+    STORAGES["staticfiles"] = {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    }
