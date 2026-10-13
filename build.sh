@@ -9,4 +9,4 @@ python manage.py migrate
 
 python manage.py collectstatic --noinput
 
-python manage.py create_admin.py
+python manage.py create_admin
