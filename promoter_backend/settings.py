@@ -30,11 +30,10 @@ ALLOWED_HOSTS = [
     host.strip()
     for host in os.environ.get(
         "ALLOWED_HOSTS",
-        "localhost,127.0.0.1,promoter-backend.vercel.app",
+        "localhost,127.0.0.1",
     ).split(",")
     if host.strip()
 ]
-
 
 # =========================================================
 # APPLICATIONS
@@ -108,7 +107,7 @@ CSRF_TRUSTED_ORIGINS = [
     origin.strip()
     for origin in os.environ.get(
         "CSRF_TRUSTED_ORIGINS",
-        "http://localhost:5173,http://localhost:3000,https://promoter-pi.vercel.app,https://promoter-backend.vercel.app",
+        "http://localhost:5173,http://localhost:3000,https://promoter-pi.vercel.app",
     ).split(",")
     if origin.strip()
 ]

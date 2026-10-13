@@ -1,1 +1,1 @@
-web: gunicorn promoter_backend.wsgi
+web: gunicorn promoter_backend.wsgi:application
