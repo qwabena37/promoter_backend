@@ -31,6 +31,7 @@ ALLOWED_HOSTS = [
     for host in os.environ.get(
         "ALLOWED_HOSTS",
         "localhost,127.0.0.1",
+        "promoter-backend-v2jk.onrender.com"
     ).split(",")
     if host.strip()
 ]
